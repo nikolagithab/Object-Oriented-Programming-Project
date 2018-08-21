@@ -4,14 +4,15 @@
 // Main application driver for OpenGL application
 //
 //  AUTHOR: Song Ho Ahn (song.ahn@gmail.com)
+// MODIFIED BY: Nikola Petrovski
 // CREATED: 2010-11-18
 // UPDATED: 2017-03-24
 ///////////////////////////////////////////////////////////////////////////////
 
 // imports
-import nikola.Line;
-import nikola.Vector2;// separate than your package locations..
-
+import mathematics.Line;
+import mathematics.Vector2;
+import mathematics.Star;
 
 
 import java.awt.*;
@@ -24,13 +25,11 @@ import com.jogamp.opengl.awt.*;         // GLCanvas
 import com.jogamp.opengl.util.*;        // FPSAnimator
 import com.jogamp.opengl.util.awt.*;    // TextRenderer
 
-
-
 public class App implements GLEventListener, KeyListener, MouseListener, MouseMotionListener, MouseWheelListener
 {
     // constants
-    private static final int SCREEN_WIDTH = 512;
-    private static final int SCREEN_HEIGHT = 512;
+    private static final int SCREEN_WIDTH = 2500;
+    private static final int SCREEN_HEIGHT = 1400;
     private static final int FPS = 60;              // frames per second
     private static final float CAMERA_DISTANCE = 20.0f;
 
@@ -56,14 +55,8 @@ public class App implements GLEventListener, KeyListener, MouseListener, MouseMo
     private long  prevTime;     // nano sec
 
     //@@VARS
-    // insert your variables here*********************************
-//6.1
-    //6.2
-    //6.3 here instance array..
-    
-    private Vector2[] vertices;//infor acout color vertex aka point some renderable infor in 2d or 3d space!
-    
-
+    // insert your variables here
+    public Star[] star = new Star[10];
 
     ///////////////////////////////////////////////////////////////////////////
     public static void main(String[] args)
@@ -97,26 +90,13 @@ public class App implements GLEventListener, KeyListener, MouseListener, MouseMo
         cameraAngleX = 0;
         cameraAngleY = 0;
 
-        //degree to rad:
-        final float D2R = Math.PI / 180;//for sin and cos..
-        
-        
         //@@INIT
         // initialize your variables here
+        for (int i = 0; i < 10; i++){
+            star[i] = new Star(10-i);
+        }
+
     }
-//here goes 6.4
-    vertices = new Vector2[10];// 5+5 inner outer
-    // define 1st pint
-    vertices[0] = new Vector2(0,10)//inside array is empty..have to create content object in the empty space.
-//define 3rd point
-        vertices[2] = new Vector2(10 * Math.sin(D2R*72), 10 * Math.cos(D2R * 72))//sin and cos degree to rad..
-vertices[8] = new Vector2(-vertices[2].x, vertices[2].y);
-    
-    //do all outer points
-    
-    //for inner how!!!!!!!!!!!!!!!!!!!!
-    
-    
         
         
         
@@ -137,7 +117,7 @@ vertices[8] = new Vector2(-vertices[2].x, vertices[2].y);
         // config frame
         frame.add(canvas);
         frame.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
-        frame.setLocation(100, 100);
+        frame.setLocation(0, 0);
         frame.addWindowListener(new WindowAdapter() {
             public void windowClosing(WindowEvent e) {
                 exit();
@@ -211,7 +191,7 @@ vertices[8] = new Vector2(-vertices[2].x, vertices[2].y);
         gl.glRotatef(cameraAngleY, 0, 1, 0);   // heading
 
         // draw scene
-        drawGrid(gl, 10, 1);
+        drawGrid(gl, 15, 1);
         drawStar(gl);
     }
 
@@ -228,7 +208,7 @@ vertices[8] = new Vector2(-vertices[2].x, vertices[2].y);
 
         gl.glBegin(GL.GL_LINES);
 
-        gl.glColor4f(0.5f, 0.5f, 0.5f, 0.5f);
+        gl.glColor4f(0f, 0f, 0f, 0f);
         for(float i=step; i <= size; i+= step)
         {
             gl.glVertex3f(-size,  i, 0);   // lines parallel to X-axis
@@ -243,12 +223,12 @@ vertices[8] = new Vector2(-vertices[2].x, vertices[2].y);
         }
 
         // x-axis
-        gl.glColor4f(1.0f, 0, 0, 0.5f);
+        gl.glColor4f(0f, 0f, 0f, 0f);
         gl.glVertex3f(-size, 0, 0);
         gl.glVertex3f( size, 0, 0);
 
         // y-axis
-        gl.glColor4f(0, 0, 1.0f, 0.5f);
+        gl.glColor4f(0f, 0f, 0f, 0f);
         gl.glVertex3f(0, -size, 0);
         gl.glVertex3f(0,  size, 0);
 
@@ -273,33 +253,80 @@ vertices[8] = new Vector2(-vertices[2].x, vertices[2].y);
         gl.glDisable(GL.GL_DEPTH_TEST);
 
         // draw lines
-        gl.glLineWidth(3.0f);
-        gl.glColor4f(0.3f, 0.5f, 1.0f, 1.0f);
+        gl.glLineWidth(6.0f);
+        gl.glColor4f(0.3f, 0.1f, 0.3f, 1.0f);
         gl.glBegin(GL.GL_LINES);
 
-        // line 1
-        gl.glVertex2f(0, 10);
-        gl.glVertex2f(8, -8);
-
-        // line 2
-        gl.glVertex2f( 8, -8);
-        gl.glVertex2f(-8, -8);
-
-        // line 3
-        gl.glVertex2f(-8, -8);
-        gl.glVertex2f( 0, 10);
+        // outer loop for star objects in the array to draw
+        for (int s = 0; s < 10; s++){
+            
+            // inner loop for points objects in the star
+            for (int i = 0; i < star[s].vertices.length; i++) {
+                gl.glVertex2f(star[s].vertices[i].x, star[s].vertices[i].y);  
+                
+                int j = i + 1; 
+                // to catch arrayIndexOutOfBounds exception
+                if (i == (star[s].vertices.length - 1)) {
+                    j = 0;
+                }
+                gl.glVertex2f(star[s].vertices[j].x, star[s].vertices[j].y);
+            } 
+        
+        }
 
         gl.glEnd();
+        // define color vars
+        float r = 1.0f;
+        float g = 0.5f;
+        float b = 0.0f;
+        float alpha = 0.0f;
+		
+		// outer loop controls which star to fill in
+        for (int f = 0; f < 10; f++){
+            
+            // change colors
+            r += 0.1;
+            g += 0.1;
+            b += 0.1;
+            
+            // fill polygon
+            gl.glBegin(gl.GL_POLYGON);
+        
+            gl.glColor4f(r, g, b, alpha);
+            gl.glVertex2f(star[f].vertices[1].x, star[f].vertices[1].y);
+            gl.glVertex2f(star[f].vertices[3].x, star[f].vertices[3].y);
+            gl.glVertex2f(star[f].vertices[5].x, star[f].vertices[5].y);
+            gl.glVertex2f(star[f].vertices[7].x, star[f].vertices[7].y);
+            gl.glVertex2f(star[f].vertices[9].x, star[f].vertices[9].y);
+        
+            gl.glEnd();
 
-        // draw points
+            gl.glBegin(gl.GL_TRIANGLES); 
+        
+           for (int i = 0; i < 10; i+=2){
+            
+               if (i > 0){
+                   gl.glVertex2f(star[f].vertices[i].x, star[f].vertices[i].y); // 1st vertex 
+                   gl.glVertex2f(star[f].vertices[i+1].x, star[f].vertices[i+1].y); // 2nd vertex 
+                   gl.glVertex2f(star[f].vertices[i-1].x, star[f].vertices[i-1].y); // 3rd vertex 
+               } else {
+                   gl.glVertex2f(star[f].vertices[0].x, star[f].vertices[0].y); // 1st vertex 
+                   gl.glVertex2f(star[f].vertices[9].x, star[f].vertices[9].y); // 2nd vertex 
+                   gl.glVertex2f(star[f].vertices[1].x, star[f].vertices[1].y); // 3rd vertex 
+               } 
+            }
+        
+            gl.glEnd();
+        
+        }
+		
+		// draw points
         gl.glPointSize(10);
         gl.glColor3f(1, 0.5f, 0);
         gl.glBegin(gl.GL_POINTS);
-
-        gl.glVertex2f( 0, 10);  // point 1
-        gl.glVertex2f( 8, -8);  // point 2
-        gl.glVertex2f(-8, -8);  // point 3
-
+        
+        // no points in this implementation
+          
         gl.glEnd();
 
         gl.glLineWidth(1.0f);
@@ -334,7 +361,7 @@ vertices[8] = new Vector2(-vertices[2].x, vertices[2].y);
         screenWidth = w;
         screenHeight = h;
 
-        gl.glViewport(0, 0, w, h);
+        gl.glViewport(700, 300, w, h);
 
         // set viewing frustum
         gl.glMatrixMode(GLMatrixFunc.GL_PROJECTION);
